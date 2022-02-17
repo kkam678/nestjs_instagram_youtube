@@ -3,6 +3,8 @@ import {AppModule} from './app.module';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import {ValidationPipe} from "@nestjs/common";
+import {logger3} from "./logger/logger3.middelware";
+import {AuthGuard} from "./guard/AuthGuard";
 
 
 // dotenv.config({
@@ -14,6 +16,7 @@ import {ValidationPipe} from "@nestjs/common";
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
+    app.useGlobalGuards(new AuthGuard());
     app.useGlobalPipes(new ValidationPipe({
         transform: true
     }));

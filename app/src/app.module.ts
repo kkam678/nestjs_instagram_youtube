@@ -1,4 +1,4 @@
-import {Module} from '@nestjs/common';
+import {MiddlewareConsumer, Module, NestModule, RequestMethod} from '@nestjs/common';
 import {AppController} from './app.controller';
 import {AppService} from './app.service';
 import {UsersModule} from './users/users.module';
@@ -7,10 +7,22 @@ import {ConfigModule, ConfigService} from "@nestjs/config";
 import emailConfig from "./config/email-config";
 import {validationSchema} from "./config/validation-schema";
 import {TypeOrmModule} from "@nestjs/typeorm";
+import {LoggerMiddleware} from "./logger/logger.middelware";
+import {Logger2Middleware} from "./logger/logger2.middelware";
+import {UsersController} from "./users/users.controller";
+import {APP_GUARD} from "@nestjs/core";
+import {AuthGuard} from "./guard/AuthGuard";
 
 @Module({
     controllers: [AppController],
-    providers: [AppService, ConfigService],
+    providers: [
+        AppService,
+        ConfigService,
+        {
+            provide: APP_GUARD,
+            useClass: AuthGuard,
+        }
+    ],
     imports: [
         ConfigModule.forRoot({
             envFilePath: [`${__dirname}/config/env/.${process.env.NODE_ENV}.env`],
@@ -23,5 +35,11 @@ import {TypeOrmModule} from "@nestjs/typeorm";
         EmailModule,
     ],
 })
-export class AppModule {
+export class AppModule implements NestModule{
+    configure(consumer: MiddlewareConsumer): any {
+        consumer
+            .apply(LoggerMiddleware,Logger2Middleware)
+            .forRoutes(UsersController);
+            // .exclude({ path: 'users', method: RequestMethod.GET },)
+    }
 }
