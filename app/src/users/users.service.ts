@@ -1,5 +1,5 @@
 import * as uuid from 'uuid';
-import {Injectable, UnprocessableEntityException} from '@nestjs/common';
+import {Injectable, NotFoundException, UnprocessableEntityException} from '@nestjs/common';
 import {CreateUserDto} from './dto/create-user.dto';
 import {UpdateUserDto} from './dto/update-user.dto';
 import {EmailService} from "../email/email.service";
@@ -7,12 +7,16 @@ import {InjectRepository} from "@nestjs/typeorm";
 import {UserEntity} from "./entities/user.entity";
 import {Connection, Repository} from "typeorm";
 import {ulid} from "ulid";
+import {AuthService} from "../auth/auth.service";
+import {UserInfo} from "./UserInfo";
+
 
 @Injectable()
 export class UsersService {
     constructor(
-        private emailService: EmailService,
         @InjectRepository(UserEntity) private usersRepository: Repository<UserEntity>,
+        private emailService: EmailService,
+        private authService: AuthService,
         private connection: Connection,
     ) {
 
@@ -20,7 +24,7 @@ export class UsersService {
 
     async create(name: string, email: string, password: string) {
         const userExist = await this.checkUserExists(email);
-        if(userExist){
+        if (userExist) {
             throw new UnprocessableEntityException('해당 이메일로는 가입할 수 없습니다.');
         }
         const signupVerifyToken = uuid.v1();
@@ -31,27 +35,47 @@ export class UsersService {
     }
 
     async verifyEmail(signupVerifyToken: string): Promise<string> {
-        // TODO
-        // 1. DB에서 signupVerifyToken으로 회원 가입 처리중인 유저가 있는지 조회하고 없다면 에러 처리
-        // 2. 바로 로그인 상태가 되도록 JWT를 발급
+        const user = await this.usersRepository.findOne({signupVerifyToken});
 
-        throw new Error('Method not implemented.');
+        if (!user) {
+            throw new NotFoundException('유저가 존재하지 않습니다');
+        }
+
+        return this.authService.login({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+        });
     }
 
     async login(email: string, password: string): Promise<string> {
-        // TODO
-        // 1. email, password를 가진 유저가 존재하는지 DB에서 확인하고 없다면 에러 처리
-        // 2. JWT를 발급
+        const user = await this.usersRepository.findOne({email, password});
+        if (!user) {
+            throw new NotFoundException('유저가 존재하지 않습니다');
+        }
 
-        throw new Error('Method not implemented.');
+        return this.authService.login({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+        });
     }
 
-    // async getUserInfo(userId: string): Promise<UserInfo> {
-    //     // 1. userId를 가진 유저가 존재하는지 DB에서 확인하고 없다면 에러 처리
-    //     // 2. 조회된 데이터를 UserInfo 타입으로 응답
-    //
-    //     throw new Error('Method not implemented.');
-    // }
+    async getUserInfo(userId: string): Promise<UserInfo> {
+
+        const user = await this.usersRepository.findOne({id: userId});
+
+        if (!user) {
+            throw new NotFoundException('유저가 존재하지 않습니다');
+        }
+        // 2. 조회된 데이터를 UserInfo 타입으로 응답
+        return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+        }
+
+    }
 
     private async checkUserExists(email: string) {
         const user = await this.usersRepository.findOne({email: email});

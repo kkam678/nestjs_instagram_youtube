@@ -16,7 +16,7 @@ import {AuthGuard} from "./guard/AuthGuard";
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
-    app.useGlobalGuards(new AuthGuard());
+    // app.useGlobalGuards(new AuthGuard());
     app.useGlobalPipes(new ValidationPipe({
         transform: true
     }));

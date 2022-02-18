@@ -1,14 +1,32 @@
-import {Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe} from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    Post,
+    Body,
+    Patch,
+    Param,
+    Delete,
+    Query,
+    ParseIntPipe,
+    Headers,
+    UseGuards
+} from '@nestjs/common';
 import {UsersService} from './users.service';
 import {CreateUserDto} from './dto/create-user.dto';
 import {UpdateUserDto} from './dto/update-user.dto';
 import {VerifyEmailDto} from "./dto/verify-email.dto";
 import {UserLoginDto} from "./dto/user-login.dto";
 import {ValidationPipe} from "./validation.pipe";
+import {AuthService} from "../auth/auth.service";
+import {UserInfo} from "./UserInfo";
+import {AuthGuard} from "../guard/AuthGuard";
 
 @Controller('users')
 export class UsersController {
-    constructor(private readonly usersService: UsersService) {
+    constructor(
+        private readonly usersService: UsersService,
+        private readonly authService: AuthService,
+    ) {
     }
 
     @Post()
@@ -30,13 +48,10 @@ export class UsersController {
         return await this.usersService.login(email, password);
     }
 
+    @UseGuards(AuthGuard)
     @Get(':id')
-    findOne(@Param('id',ParseIntPipe) id: number){
-        return id;
+    async getUserInfo(@Headers() headers: any, @Param('id') id: string): Promise<UserInfo>{
+        return this.usersService.getUserInfo(id);
     }
 
-    // @Get('/:id')
-    // async getUserInfo(@Param('id') userId: string): Promise<UserInfo> {
-    //     return await this.usersService.getUserInfo(userId);
-    // }
 }

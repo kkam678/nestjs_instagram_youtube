@@ -12,6 +12,8 @@ import {Logger2Middleware} from "./logger/logger2.middelware";
 import {UsersController} from "./users/users.controller";
 import {APP_GUARD} from "@nestjs/core";
 import {AuthGuard} from "./guard/AuthGuard";
+import {AuthModule} from './auth/auth.module';
+import authConfig from "./config/auth-config";
 
 @Module({
     controllers: [AppController],
@@ -21,25 +23,26 @@ import {AuthGuard} from "./guard/AuthGuard";
         {
             provide: APP_GUARD,
             useClass: AuthGuard,
-        }
+        },
     ],
     imports: [
         ConfigModule.forRoot({
             envFilePath: [`${__dirname}/config/env/.${process.env.NODE_ENV}.env`],
-            load: [emailConfig],
+            load: [emailConfig, authConfig],
             isGlobal: true,
             validationSchema,
         }),
         TypeOrmModule.forRoot(),
         UsersModule,
         EmailModule,
+        AuthModule,
     ],
 })
-export class AppModule implements NestModule{
+export class AppModule implements NestModule {
     configure(consumer: MiddlewareConsumer): any {
         consumer
-            .apply(LoggerMiddleware,Logger2Middleware)
+            .apply(LoggerMiddleware, Logger2Middleware)
             .forRoutes(UsersController);
-            // .exclude({ path: 'users', method: RequestMethod.GET },)
+        // .exclude({ path: 'users', method: RequestMethod.GET },)
     }
 }
