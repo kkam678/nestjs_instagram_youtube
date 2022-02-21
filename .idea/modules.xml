@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/hwcledor_nest.iml" filepath="$PROJECT_DIR$/.idea/hwcledor_nest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/nestjs.iml" filepath="$PROJECT_DIR$/.idea/nestjs.iml" />
     </modules>
   </component>
 </project>
